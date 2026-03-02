@@ -20,7 +20,7 @@ Hybrid vector (Milvus) and full-text (Elasticsearch) index of the Cangjie docs f
 
 ## Ingest
 
-Populate both backends from `cangjie_docs`:
+Populate both backends from the repo's `docs/` folder:
 
 ```bash
 # Vector DB (Milvus) – embeds chunks with sentence-transformers

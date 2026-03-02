@@ -40,11 +40,10 @@ def main():
     print("Connecting to Elasticsearch...")
     # Disable cert verification for localhost (e.g. Docker)
     verify_certs = "localhost" not in ELASTICSEARCH_URL
-    es = Elasticsearch(
-        ELASTICSEARCH_URL,
-        api_key=ELASTICSEARCH_API_KEY,
-        verify_certs=verify_certs,
-    )
+    es_kwargs = {"verify_certs": verify_certs}
+    if ELASTICSEARCH_API_KEY:
+        es_kwargs["api_key"] = ELASTICSEARCH_API_KEY
+    es = Elasticsearch(ELASTICSEARCH_URL, **es_kwargs)
     try:
         es.info()
     except Exception as e:

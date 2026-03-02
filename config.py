@@ -1,8 +1,9 @@
 """Configuration for Cangjie docs database (Milvus + Elasticsearch)."""
 import os
 
-# Path to Cangjie documentation (markdown files)
-DOCS_PATH = os.environ.get("CANGJIE_DOCS_PATH", "/Users/jacob/projects/pbt-dev/cangjie_docs")
+# Path to Cangjie documentation (markdown files). Repo includes docs/.
+_DEFAULT_DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "docs")
+DOCS_PATH = os.environ.get("CANGJIE_DOCS_PATH", _DEFAULT_DOCS)
 
 # Milvus standalone (default container port)
 MILVUS_URI = os.environ.get("MILVUS_URI", "http://localhost:19530")
@@ -10,10 +11,9 @@ MILVUS_COLLECTION = "cangjie_docs"
 
 # Elasticsearch
 ELASTICSEARCH_URL = os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")
-ELASTICSEARCH_API_KEY = os.environ.get(
-    "ELASTICSEARCH_API_KEY",
-    "YlY3OFRKd0IxTG1KTmszcHFhZW46cVJhaklkYjB1bXJLaEl1Vmw4aC1jQQ==",
-)
+# Elasticsearch API key. Generate your own via: POST /_security/api_key
+# Required when security enabled; leave unset/empty when xpack.security.enabled=false
+ELASTICSEARCH_API_KEY = os.environ.get("ELASTICSEARCH_API_KEY") or None
 ELASTICSEARCH_INDEX = "cangjie_docs"
 
 # Embedding model for vector search (sentence-transformers)

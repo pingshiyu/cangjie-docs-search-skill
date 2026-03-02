@@ -58,11 +58,10 @@ def search_elasticsearch(query: str, top_k: int = 5) -> list[dict]:
     from elasticsearch import Elasticsearch
 
     verify_certs = "localhost" not in ELASTICSEARCH_URL
-    es = Elasticsearch(
-        ELASTICSEARCH_URL,
-        api_key=ELASTICSEARCH_API_KEY,
-        verify_certs=verify_certs,
-    )
+    es_kwargs = {"verify_certs": verify_certs}
+    if ELASTICSEARCH_API_KEY:
+        es_kwargs["api_key"] = ELASTICSEARCH_API_KEY
+    es = Elasticsearch(ELASTICSEARCH_URL, **es_kwargs)
     resp = es.search(
         index=ELASTICSEARCH_INDEX,
         size=top_k,
