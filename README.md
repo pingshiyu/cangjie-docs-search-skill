@@ -1,6 +1,10 @@
 # Cangjie documentation database
 
-Hybrid vector (Milvus) and full-text (Elasticsearch) index of the Cangjie docs for LLM-oriented retrieval.
+A script that searches through the Cangjie documentation. It is intended to be used as a skill by agents. Unlike grepping the Cangjie docs directly—which yields raw line matches and forces the agent to sift through many files—this tool returns pre-chunked, semantically relevant snippets (via vector search) or keyword-matched sections (via full-text search), so the agent gets compact, context-ready answers instead of sprawling grep output.
+
+## For humans
+
+**You just need to get an agent to follow the instructions in [AGENT_SETUP.md](AGENT_SETUP.md).** That document walks through Docker setup (Milvus, Elasticsearch), Python dependencies, index ingestion, and skill configuration. Once set up, the agent can use this search system via the configured Cursor skill.
 
 ## Setup
 
