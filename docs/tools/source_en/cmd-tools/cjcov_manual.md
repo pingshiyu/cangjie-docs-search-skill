@@ -1,0 +1,491 @@
+# Coverage Statistics Tool
+
+## Overview
+
+`cjcov` (Cangjie Coverage) is a coverage statistics tool designed for the Cangjie language, used to generate coverage reports for Cangjie language programs.
+
+## Usage Instructions
+
+Run `cjcov -h` to get help information. The options are described below:
+
+```text
+Usage: cjcov [options]
+
+A tool used to summarize the coverage in html reports.
+
+Options:
+  -v, --version                 Print the version number, then exit.
+  -h, --help                    Show this help message, then exit.
+  -r ROOT, --root=ROOT          The root directories of your source files, defaults to '.', the current directory.
+                                File names are reported relative to this root.
+  -o OUTPUT, --output=OUTPUT    The output directories of html reports, defaults to '.', the current directory.
+  -b, --branches                Report the branch coverage. (It is an experimental feature and may generate imprecise branch coverage.)
+  --verbose                     Print some detail messages, including parsing data for the gcov file.
+  --html-details                Generate html reports for each source file.
+  -x, --xml                     Generate a xml report.
+  -j, --json                    Generate a json report.
+  -k, --keep                    Keep gcov files after processing.
+  -s SOURCE, --source=SOURCE    The directories of cangjie source files.
+  -e EXCLUDE, --exclude=EXCLUDE
+                                The cangjie source files starts with EXCLUDE will not be showed in coverage reports.
+  -i INCLUDE, --include=INCLUDE
+                                The cangjie source files starts with INCLUDE will be showed in coverage reports.
+```
+
+Basic command usage is shown below. `cjcov` is the main program name, and `--version` displays the version number of `cjcov`. Some configuration options support both short and long forms with identical effects. For detailed usage, refer to the `cjcov --help` command.
+
+```text
+cjcov -version or cjcov -v
+```
+
+### Usage Steps
+
+#### Single File Scenario
+
+Cangjie version package preparation --> Cangjie source code preparation --> Build Cangjie source code with `--coverage` compilation option to generate binary files --> Execute binary files --> `cjcov` generates coverage statistics results.
+
+Using `hello world` as an example (assuming the current directory is `WORKPATH`):
+
+1. Cangjie version package preparation
+
+    For the `Linux` platform, assuming the Cangjie version package is extracted in the `WORKPATH` directory, execute the command `source WORKPATH/cangjie/envsetup.sh`.
+
+2. Cangjie source code preparation
+
+    The source code directory structure is as follows:
+
+    ```text
+    src/
+    └── main.cj
+    ```
+
+    The content of `main.cj` is as follows:
+
+    ```cangjie
+    main(): Int64 {
+        print("hello world\n")
+        return 0
+    }
+    ```
+
+3. Compile the source code
+
+    Execute the following command in the `WORKPATH` directory:
+
+    ```shell
+    cjc --coverage main.cj
+    ```
+
+    After compilation, the `default.gcno` and `main` files will be generated in the `WORKPATH` directory.
+
+4. Run the compiled binary
+
+    Execute the `./main` command in the `WORKPATH` directory. After running, the `default.gcda` file will be generated in the `WORKPATH` directory.
+
+5. Generate `html` with `cjcov`
+
+    Execute `cjcov -o output --html-details` in the `WORKPATH` directory. For more `cjcov` parameter usage, refer to the [Command Description](#command-description) section.
+
+After executing the `cjcov` command, the following files will be generated in the `WORKPATH/output` directory:
+
+```text
+output
+├── cjcov_logs (This directory contains detailed logs of the cjcov execution process and can be ignored.)
+│   ├── cjcov.log
+│   └── gcov_parse.log
+├── index.html (The overall coverage report, openable in a browser.)
+└── src_main.cj.html (Coverage for a single file, accessible by opening index.html and automatically navigating to this file.)
+```
+
+#### Multiple Files Scenario
+
+For multiple files scenarios, it is recommended to use the package management tool commands `cjpm build --coverage` or `cjpm test --coverage`. For specific usage, refer to the [Package Management Tool](./cjpm_manual.md).
+
+## Command Description
+
+### cjcov -h | --help
+
+Displays the basic usage of `cjcov`.
+
+### cjcov -v | --version
+
+Displays the version number of `cjcov`. When the `-v` or `--version` parameter is specified, any other option parameters will not take effect, and only the version number will be displayed. If both `--version` and `--help` are used, the version information will be displayed before exiting.
+
+### cjcov --verbose
+
+When this option is specified, some log information will be generated in the `cjcov_logs` directory. This parameter is not enabled by default, meaning intermediate information will not be printed by default. The `gcov` file is an intermediate file generated by the `cjcov` tool. The format of the `gcov` file parsed by `cjcov` is as follows:
+
+```text
+==================== start: main.cj.gcov =====================
+
+noncode line numbers:
+[0, 0, 0, 0, 1, 2, 6, 7, 9, 10, 11, 15, 17, 18]
+
+uncovered line numbers:
+[5]
+
+covered data:
+[(16, 1), (3, 1), (4, 1), (8, 1), (12, 1), (13, 1), (14, 1)]
+
+branches data:
+line number:    4  ==>  data: [(0, 0), (1, 1)]
+
+===================== end: main.cj.gcov =======================
+
+```
+
+When this option is specified, detailed coverage data for each `gcov` file will be displayed.
+
+Field descriptions:
+
+- `start: xxx.gcov, end: xxx.gcov`: The text between these two lines represents the coverage data parsed from the corresponding `xxx.gcov` file.
+- `noncode line numbers`: Displays line numbers not counted in the total code lines. These appear with a white background in the `html` and correspond to lines starting with `-` in the `gcov` file.
+- `uncovered line numbers`: Displays lines that were not covered. These appear with a red background in the `html` and correspond to lines starting with `#####` in the `gcov` file.
+- `covered data`: Displays covered data in the format (line number, coverage count). These appear with a green background in the `html`. If the coverage count is greater than 0, the `Exec` column in the `html` will display `Y`, corresponding to lines starting with numbers in the `gcov` file.
+- `branches data`: Displays branch coverage data in the format (line number, branch coverage count). In the `Branch` column of the `html`, an inverted triangle shows the branch coverage count/total branches. This data corresponds to lines starting with `branch` in the `gcov` file.
+
+### cjcov --html-details
+
+If this parameter is specified, `html` files corresponding to Cangjie files will be generated. The main `index` file will include an index for each sub-`html` file. Sub-`html` files are placed in the same directory as `index.html`.
+
+Sub-`html` filenames are concatenated from the directory and filename with underscores. For example, if the source file is `src/main.cj`, the generated `html` filename will be `src_main.cj.html`. If the source file path contains special characters, they will be replaced with `=`. For more details, refer to the [Filenames with Special Characters](#filenames-with-special-characters) section.
+
+If this parameter is not specified, sub-`html` files will not be generated. The main `index` file will display coverage data for each sub-`html` file but will not allow navigation to the corresponding sub-`html` file.
+
+This parameter is not enabled by default. By default, only an `index.html` file will be generated, without sub-`html` files.
+
+### cjcov -x | --xml
+
+If this parameter is specified, a `coverage.xml` file will be generated in the specified output path. `coverage.xml` records coverage data for all files.
+
+### cjcov -j | --json
+
+If this parameter is specified, a `coverage.json` file will be generated in the specified output path. `coverage.json` records coverage data for all files.
+
+### cjcov -k | --keep
+
+When this parameter is specified, the generated `gcov` intermediate files will not be deleted. If `gcov` files are not deleted, execution counts will accumulate, which may affect the accuracy of coverage data.
+
+This parameter is not enabled by default, meaning `gcov` intermediate files will be deleted by default.
+
+### cjcov -b | --branches
+
+When this parameter is specified, branch coverage information will be generated.
+
+This parameter is not enabled by default, meaning branch coverage information will not be generated. In this case, the branch coverage percentage in the `html` report will display as `-`.
+
+### cjcov -r ROOT | --root=ROOT
+
+The `ROOT` parameter specified here indicates that `gcda` files can be found in the `ROOT` directory or its recursive subdirectories. `gcda` and `gcno` files are generated together by default. It is not recommended to manually separate `gcda` and `gcno` files, as this may cause the program to fail.
+
+If the specified `ROOT` directory does not exist, the `cjcov` tool will display an error message.
+
+If this parameter is not specified, the current directory will be used as the `ROOT` directory by default.
+
+### cjcov -o OUTPUT | --output=OUTPUT
+
+The `OUTPUT` parameter specified here indicates the output path for the `html` coverage report.
+
+If the `OUTPUT` directory does not exist and its parent directory also does not exist, the `cjcov` tool will display an error message. If the `OUTPUT` directory does not exist but its parent directory does, `cjcov` will create the `OUTPUT` directory.
+
+If this parameter is not specified, the current directory will be used as the `OUTPUT` directory for storing `html` files by default.
+
+### -s SOURCE | --source=SOURCE
+
+The `SOURCE` parameter specified here indicates the code path for Cangjie source files. The main coverage report `index.html` will include an index for each source file, with file paths recorded as relative paths. If the `-s SOURCE | --source SOURCE` parameter is specified, the paths in the `SOURCE` list will be prioritized as the reference paths for relative paths. If this parameter is not specified, `-r ROOT | --root=ROOT` will be used as the reference path for relative paths. If neither is specified, the current path will be used as the reference path for relative paths.
+
+Example:
+
+Cangjie code directory structure:
+
+```text
+/work/cangjie/tests/API/test01/src/1.cj
+/work/cangjie/tests/API/test01/src/2.cj
+/work/cangjie/tests/LLVM/test02/src/3.cj
+/work/cangjie-tools/tests/LLVM/test01/src/4.cj
+/work/cangjie-tools/tests/LLVM/test02/src/5.cj
+```
+
+1. Execute the following command in the `/work` directory:
+
+    ```shell
+    cjcov --root=./ -s "/work/cangjie /work/cangjie-tools/tests" --html-details --output=html_output
+    ```
+
+    The relative paths of source files displayed in the `html` will be:
+
+    ```text
+    tests/API/test01/src/1.cj
+    tests/API/test01/src/2.cj
+    tests/LLVM/test02/src/3.cj
+    LLVM/test01/src/4.cj
+    LLVM/test02/src/5.cj
+    ```
+
+2. Execute the following command in the `/work` directory without specifying the `--root` and `--source` parameters. The current path will be used as the reference path for relative paths by default:
+
+    ```shell
+    cjcov --html-details --output=html_output
+    ```
+
+    The relative paths of source files displayed in the `html` will be:
+
+    ```text
+    cangjie/tests/API/test01/src/1.cj
+    cangjie/tests/API/test01/src/2.cj
+    cangjie/tests/LLVM/test02/src/3.cj
+    cangjie-tools/tests/LLVM/test01/src/4.cj
+    cangjie-tools/tests/LLVM/test02/src/5.cj
+    ```
+
+### -e EXCLUDE | --exclude=EXCLUDE
+
+The `EXCLUDE` parameter specified here indicates a list of source files for which coverage information should not be generated. Directories and files are supported.
+
+Example:
+
+Cangjie code directory structure:
+
+```text
+/usr1/cangjie/tests/API/test01/src/1.cj
+/usr1/cangjie/tests/API/test01/src/2.cj
+/usr1/cangjie/tests/LLVM/test02/src/3.cj
+/usr1/cangjie-tools/tests/LLVM/test01/src/4.cj
+/usr1/cangjie-tools/tests/LLVM/test02/src/5.cj
+```
+
+Execute the following command in the `/usr1` directory:
+
+```shell
+cjcov --root=./ -s "/usr1/cangjie" -e "/usr1/cangjie-tools/tests/LLVM" --html-details --output=html_output
+```
+
+The relative paths of source files displayed in the `html` will be as follows. Files starting with `/usr1/cangjie-tools/tests/LLVM` will not appear in the file list of the `html`:
+
+```text
+tests/API/test01/src/1.cj
+tests/API/test01/src/2.cj
+tests/LLVM/test02/src/3.cj
+```
+
+### -i INCLUDE | --include=INCLUDE
+
+The `INCLUDE` parameter specified here indicates that files starting with `INCLUDE` will be displayed in the file list of `index.html`. Directories and files are supported. If the paths specified by `-e | --exclude` and `-i | --include` overlap, an error message will be displayed.
+
+Example:
+
+Cangjie code directory `/usr1/cangjie/tests` structure:
+
+```text
+├── API
+│   └── test01
+│       └── src
+│           ├── 1.cj
+│           └── 2.cj
+└── LLVM
+    └── test02
+        └── src
+            └── 3.cj
+```
+
+Execute the following command in the `/usr1` directory. The `-i` parameter specifies the files to be included in the coverage report `index.html`:
+
+```shell
+cjcov --root=./ -s "/usr1/cangjie" -i "/usr1/cangjie/tests/API/test01/src/1.cj /usr1/cangjie/tests/LLVM/test02" --html-details --output=html_output
+```
+
+After executing the above command, the file paths displayed in `index.html` will be as follows (`tests/API/test01/src/2.cj` is not in the list specified by the `-i` parameter and will not appear in the file list of the `html`):
+
+```text
+tests/API/test01/src/1.cj
+tests/LLVM/test02/src/3.cj
+```
+
+## Special Scenarios
+
+### Binary Cannot Terminate Normally
+
+For scenarios where long-running network service programs cannot terminate normally and generate `gcda` coverage data, a manual exit script must be executed to generate `gcda` coverage data.
+
+1. Save the following script as `stop.sh` (this script relies on `gdb`):
+
+    ```shell
+    #!/bin/sh
+    SERVER_NAME=$1
+
+    pid=`ps -ef | grep $SERVER_NAME | grep -v "grep" | awk '{print $2}'`
+    echo $pid
+    gdb -q attach $pid <<__EOF__
+    p exit(0)
+    __EOF__
+    ```
+
+2. After the long-running service program completes its business logic coverage, execute `stop.sh {service_name}`. For example, if the long-running service process is started with `./main`, stop the process to generate `gcda` data as follows:
+
+    ```shell
+    sh stop.sh ./main
+    ```
+
+### Filenames with Special Characters
+
+`cjcov` does not support scenarios where source code file names contain Chinese characters on the Windows platform.
+
+It is recommended to follow Cangjie programming conventions for naming files and avoid characters other than `[0-9a-zA-Z_]`. Special characters will be replaced with `=`.
+
+If filenames contain special characters, to ensure correct `html` navigation, the `html` filenames displayed in `index.html` will differ from the actual `html` filenames. Special characters in `html` filenames will be replaced with `=`.
+
+Example:
+
+Code structure:
+
+```text
+src
+├── 1file#.cj
+├── file10_abc.cj
+├── file11_.aaa-bbb.cj
+├── file12!#aaa!bbb.cj
+├── file13~####.cj
+├── file14*aa.cj
+├── file15`.cj
+├── file16(#).cj
+├── file2;aa.cj
+├── file3,?.cj
+├── file4@###.cj
+├── file5&cc.cj
+├── file6=.cj
+├── file7+=.cj
+├── file8$.cj
+├── file9-aaa.cj
+└── main.cj
+```
+
+Generated `html` filenames, where special characters other than `[0-9a-zA-Z_.=]` are replaced with `'='`:
+
+```text
+.
+├── index.html
+├── src_1file=.cj.html
+├── src_file10_abc.cj.html
+├── src_file11_.aaa=bbb.cj.html
+├── src_file12==aaa=bbb.cj.html
+├── src_file13=####.cj.html
+├── src_file14=aa.cj.html
+├── src_file15=.cj.html
+├── src_file16===.cj.html
+├── src_file2=aa.cj.html
+├── src_file3==.cj.html
+├── src_file4=###.cj.html
+├── src_file5=cc.cj.html
+├── src_file6=.cj.html
+├── src_file7==.cj.html
+├── src_file8=.cj.html
+├── src_file9=aaa.cj.html
+└── src_main.cj.html
+```
+
+### Branch Coverage Feature
+
+Branch coverage is an experimental feature, and there may be instances where branch coverage data is inaccurate.
+
+Currently known scenarios where branch coverage data may be inaccurate include the following expressions:
+
+- `try-catch-finally` expressions
+- Loop expressions (including `for` expressions, `while` expressions)
+- `if-else` expressions
+
+### Certain Code Not Recorded in Line Coverage Data
+
+Some code will not be recorded in line coverage data, which is normal. In general, if a line of code *only contains definitions or declarations* without actual executable code, it will not be counted in the coverage. Currently known scenarios that are not counted include:
+
+- Global variable definitions, for example:
+
+    ```cangjie
+    let HIGH_1_UInt8: UInt8 = 0b10000000;  
+    ```
+
+- Member variable declarations without initialization assignments, for example:
+
+    ```cangjie
+    public class StringBuilder <: Collection & ToString {  
+        private var myData: Array  
+        private var mySize: Int64  
+        private var endIndex: Int64  
+    }  
+    ```
+
+- Function declarations without function bodies (including `foreign` functions, etc.), for example:
+
+    ```cangjie
+    foreign func cj_core_free(p: CPointer): Unit  
+    ```
+
+- Enum type definitions, for example:
+
+    ```cangjie
+    enum Numeric {  
+        NumDay | NumYearDay | NumYearWeek | NumHour12 | NumHour24 | NumMinute | NumSecond  
+    }  
+    ```
+
+- `class`, `extend`, and other definitions. The lines containing `extend` and `class` will not be recorded in coverage data, for example:
+
+    ```cangjie
+    extend Int8 <: Formatter { // This line will not account for the coverage.  
+      ...  
+    }  
+
+    public class StringBuilder <: Collection & ToString { // This line will not account for the coverage.  
+       ...  
+    }  
+    ```
+
+### The `main` Function in Source Code Is Not Covered
+
+**Reason:** When compiling with `cjc --test`, the Cangjie testing framework generates a new `main` as the program entry point. The `main` function in the source code will no longer serve as the program entry and will not be executed.
+
+**Recommendation:** After using `cjc --test`, it is advised not to manually write redundant `main` functions.
+
+## FAQ
+
+### Error: `llvm-cov` command not found
+
+**Solutions:**
+
+Method 1: Set the `CANGJIE_HOME` environment variable. `cjcov` locates the `llvm-cov` command through the `CANGJIE_HOME` environment variable. Configuration method:
+Assuming `which cjc` displays `/work/cangjie/bin/cjc`, and both `/work/cangjie/bin/llvm/bin` and `/work/cangjie/bin/llvm/lib` directories exist, set as follows:
+
+```shell
+export CANGJIE_HOME=/work/cangjie
+```
+
+Method 2: Directly set environment variables in `/root/.bashrc`. For example, if `cjc` is located in `/work/cangjie/bin/cjc`, configure as follows:
+
+```shell
+export PATH=/work/cangjie/bin/llvm/bin:$PATH
+export LIBRARY_PATH=/work/cangjie/bin/llvm/lib:$LIBRARY_PATH
+export LD_LIBRARY_PATH=/work/cangjie/bin/llvm/lib:$LD_LIBRARY_PATH
+```
+
+Method 3: Manually install the `llvm-cov` command. For Ubuntu, execute:
+
+```shell
+apt install llvm-cov
+```
+
+### VirtualMachineError OutOfMemoryError occurred
+
+**Symptom:**
+
+```text
+An exception has occurred:
+Error VirtualMachineError OutOfMemoryError
+```
+
+**Solution:** By default, Cangjie allocates 1MB stack and 256MB heap memory. It is recommended to adjust the heap size according to file quantity and size. Typically, 2GB memory suffices for most cases. If insufficient, further increase based on specific requirements.
+
+Example:
+
+```text
+Expand heap memory to 2GB:
+export cjHeapSize=2GB
+```
