@@ -1,6 +1,9 @@
 # Skill definition (local/cursor-specific)
 SKILL.md
 
+# Milvus standalone (downloaded during agent setup)
+milvus-standalone/
+
 # Virtual environments
 .venv/
 venv/

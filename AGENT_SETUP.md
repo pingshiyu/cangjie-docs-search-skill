@@ -299,6 +299,7 @@ Create a Cursor skill so agents can invoke the query script automatically. If th
 | Issue | Cause | Fix |
 |-------|--------|-----|
 | **PermissionError** or **Permission denied** at `~/.cache/huggingface` | Default Hugging Face cache not writable (e.g. sandbox, multi-user). | Create a writable cache and set env before running ingest or vector query: `mkdir -p <project>/.cache/huggingface` and `export HF_HOME=<project>/.cache/huggingface` and `export TRANSFORMERS_CACHE=$HF_HOME`. |
+| **joblib** "Permission denied" / "will operate in serial mode" during `ingest_milvus.py` | joblib cannot use multiprocessing (e.g. sandbox or restricted env). | Safe to ignore. Ingest continues in single-process mode and still completes; no fix needed. |
 | **Elasticsearch 400** "Accept version must be 8 or 7, but found 9" or "Invalid media-type" | Python client 9.x sends a header ES 8.x rejects. | Use client 8.x: `pip install 'elasticsearch>=8,<9'`. Ensure `requirements.txt` has `elasticsearch>=8.0.0,<9` and reinstall. |
 | **Connection refused** to `localhost:9200` or `localhost:19530` | Containers not running, or agent has no network access to localhost. | Run `docker ps` and start Milvus/ES if needed. In restricted environments, run ingest/query with network permission so localhost is reachable. |
 | **pip install** times out or "incomplete-download" (e.g. torch) | Large downloads (~900 MB+); slow or interrupted connection. | Retry with network enabled and a long timeout. Use `pip install --resume-retries 5 -r requirements.txt` on retry. |
